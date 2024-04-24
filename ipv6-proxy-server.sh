@@ -463,6 +463,8 @@ function create_startup_script(){
   for pid in "\${proxyserver_process_pids[@]}"; do
     kill \$pid;
   done;
+  
+  iptables -I INPUT -j ACCEPT
 
   exit 0;
 EOF
