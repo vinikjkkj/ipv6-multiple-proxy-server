@@ -185,7 +185,7 @@ function is_proxyserver_installed(){
 }
 
 function is_proxyserver_running(){
-  if ps aux | grep -q $proxyserver_config_path; then return 0; else return 1; fi;
+  if ps aux | grep 3proxy; then return 0; else return 1; fi;
 }
 
 function is_package_installed(){
@@ -214,7 +214,7 @@ function get_subnet_mask(){
   if [ -z $subnet_mask ]; then
     # If we parse addresses from iface and want to use lower subnets, we need to clean existing proxy from interface before parsing
     if is_proxyserver_running; then kill_3proxy; fi;
-    if is_proxyserver_installed; then remove_ipv6_addresses_from_iface; fi;
+    # if is_proxyserver_installed; then remove_ipv6_addresses_from_iface; fi;
     
     full_blocks_count=$(($subnet / 16));
     # Full external ipv6 address, allocated to the interface
@@ -393,8 +393,19 @@ function generate_random_users_if_needed(){
   done;
 }
 
+function get_ipv6_addresses() {
+    local ipv6_addresses
+    ipv6_addresses=($(ip -6 addr | awk '/inet6 .* global/ { print $2 }' | cut -d'/' -f1))
+
+    for ip in "${ipv6_addresses[@]}"; do
+        # echo $ip >> "$random_ipv6_list_file"
+        echo "echo $ip >> \"$random_ipv6_list_file\""
+    done
+}
+
 function create_startup_script(){
   delete_file_if_exists $startup_script_path;
+  delete_file_if_exists $random_ipv6_list_file;
 
   is_auth_used;
   local use_auth=$?;
@@ -415,21 +426,21 @@ function create_startup_script(){
     proxyserver_process_pids+=(\$pid)
   done < <(ps -ef | awk '/[3]proxy/{print $2}');
 
-  # Save old IPv6 addresses in temporary file to delete from interface after rotating
-  old_ipv6_list_file="$random_ipv6_list_file.old"
-  if test -f $random_ipv6_list_file; 
-    then cp $random_ipv6_list_file \$old_ipv6_list_file; 
-    rm $random_ipv6_list_file;
-  fi; 
+  # # Save old IPv6 addresses in temporary file to delete from interface after rotating
+  # old_ipv6_list_file="$random_ipv6_list_file.old"
+  # if test -f $random_ipv6_list_file; 
+  #   then cp $random_ipv6_list_file \$old_ipv6_list_file; 
+  #   rm $random_ipv6_list_file;
+  # fi; 
 
+  # Array with allowed symbols in hex (in ipv6 addresses)
+  array=( 1 2 3 4 5 6 7 8 9 0 a b c d e f )
 
-  # Obtém todos os endereços IPv6 associados às interfaces de rede
-  ipv6_addresses=$(ip -6 addr | grep inet6 | grep global | awk '{print $2}' | cut -d'/' -f1)
+  # Generate random hex symbol
+  function rh () { echo \${array[\$RANDOM%16]}; }
 
-  # Loop através de todos os endereços IPv6 e os escreve no arquivo de saída
-  echo "$ipv6_addresses" | while IFS= read -r line; do
-    echo "$line" >> "$random_ipv6_list_file"
-  done
+  $(get_ipv6_addresses)
+
 
   immutable_config_part="daemon
     nserver 8.8.8.8
@@ -494,13 +505,6 @@ function create_startup_script(){
   for pid in "\${proxyserver_process_pids[@]}"; do
     kill \$pid;
   done;
-
-  # Remove old random ip list after running new 3proxy instance
-  if test -f \$old_ipv6_list_file; then
-    # Remove old ips from interface
-    for ipv6_address in \$(cat \$old_ipv6_list_file); do ip -6 addr del \$ipv6_address dev $interface_name; done;
-    rm \$old_ipv6_list_file; 
-  fi;
 
   exit 0;
 EOF
@@ -624,7 +628,7 @@ if [ $uninstall = true ]; then
   
   remove_from_cron;
   kill_3proxy;
-  remove_ipv6_addresses_from_iface;
+  # remove_ipv6_addresses_from_iface;
   close_ufw_backconnect_ports;
   rm -rf $proxy_dir;
   delete_file_if_exists $backconnect_proxies_file;
