@@ -11,14 +11,11 @@ function usage() { echo "Usage: $0 [-s | --subnet <16|32|48|64|80|96|112> proxy 
                           [-u | --username <string> proxy auth username] 
                           [-p | --password <string> proxy password]
                           [--random <bool> generate random username/password for each IPv4 backconnect proxy instead of predefined (default false)] 
-                          [-t | --proxies-type <http|socks5> result proxies type (default http)]
-                          [-r | --rotating-interval <0-59> proxies extarnal address rotating time in minutes (default 0, disabled)]
+                          [-t | --proxies-type <http|socks5> result proxies type (default socks5)]
                           [--start-port <5000-65536> start port for backconnect ipv4 (default 30000)]
                           [-l | --localhost <bool> allow connections only for localhost (backconnect on 127.0.0.1)]
                           [-f | --backconnect-proxies-file <string> path to file, in which backconnect proxies list will be written
-                                when proxies start working (default \`~/proxyserver/backconnect_proxies.list\`)]    
-                          [-d | --disable-inet6-ifaces-check <bool> disable /etc/network/interfaces configuration check & exit when error
-                                use only if configuration handled by cloud-init or something like this (for example, on Vultr servers)]                                                      
+                                when proxies start working (default \`~/proxyserver/backconnect_proxies.list\`)]                                                          
                           [-m | --ipv6-mask <string> constant ipv6 address mask, to which the rotated part is added (or gateaway)
                                 use only if the gateway is different from the subnet address]
                           [-i | --interface <string> full name of ethernet interface, on which IPv6 subnet was allocated
@@ -44,7 +41,7 @@ eval set -- "$options"
 subnet=64
 proxies_type="socks5"
 start_port=30000
-rotating_interval=10
+rotating_interval=0
 use_localhost=false
 use_random_auth=false
 uninstall=false
@@ -71,7 +68,6 @@ while true; do
     -f | --backconnect_proxies_file ) backconnect_proxies_file="$2"; shift 2;;
     -i | --interface ) interface_name="$2"; shift 2;;
     -l | --localhost ) use_localhost=true; shift ;;
-    -d | --disable-inet6-ifaces-check ) inet6_network_interfaces_configuration_check=false; shift ;;
     --allowed-hosts ) allowed_hosts="$2"; shift 2;;
     --denied-hosts ) denied_hosts="$2"; shift 2;;
     --uninstall ) uninstall=true; shift ;;
@@ -127,10 +123,6 @@ function check_startup_parameters(){
 
   if [ $(expr $subnet % 4) != 0 ]; then
     log_err_print_usage_and_exit "Error: invalid value of '-s' (subnet) parameter, must be divisible by 4";
-  fi;
-
-  if [ $rotating_interval -lt 0 ] || [ $rotating_interval -gt 59 ]; then
-    log_err_print_usage_and_exit "Error: invalid value of '-r' (proxy external ip rotating interval) parameter";
   fi;
 
   if [ $start_port -lt 5000 ] || (($start_port - $proxy_count > 65536 )); then
@@ -346,40 +338,6 @@ function configure_ipv6(){
   else
     cat /etc/sysctl.conf &>> $script_log_file;
     log_err_and_exit "Error: cannot configure IPv6 config";
-  fi;
-}
-
-function add_to_cron(){
-  delete_file_if_exists $cron_script_path;
-
-  # Add startup script to cron (job sheduler) to restart proxy server after reboot and rotate proxy pool
-  echo "@reboot $bash_location $startup_script_path" > $cron_script_path;
-  if [ $rotating_interval -ne 0 ]; then echo "*/$rotating_interval * * * * $bash_location $startup_script_path" >> "$cron_script_path"; fi;
-
-  # Add existing cron rules (not related to this proxy server) to cron script, so that they are not removed
-  # https://unix.stackexchange.com/questions/21297/how-do-i-add-an-entry-to-my-crontab
-  crontab -l | grep -v $startup_script_path >> $cron_script_path;
-
-  crontab $cron_script_path;
-  systemctl restart cron;
-
-  if crontab -l | grep -q $startup_script_path; then 
-    echo "Proxy startup script added to cron autorun successfully";
-  else
-    log_err "Warning: adding script to cron autorun failed.";
-  fi;
-}
-
-function remove_from_cron(){
-  # Delete all occurencies of proxy script in crontab
-  crontab -l | grep -v $startup_script_path > $cron_script_path;
-  crontab $cron_script_path;
-  systemctl restart cron;
-
-  if crontab -l | grep -q $startup_script_path; then
-    log_err "Warning: cannot delete proxy script from crontab";
-  else
-    echo "Proxy script deleted from crontab successfully";
   fi;
 }
 
@@ -610,7 +568,6 @@ Technical info:
   Subnet: /$subnet
   Subnet mask: $subnet_mask
   File with generated IPv6 gateway addresses: $random_ipv6_list_file
-  $(if [ $rotating_interval -ne 0 ]; then echo "Rotating interval: every $rotating_interval minutes"; else echo "Rotating: disabled"; fi;)
 EOF
 }
 
@@ -626,7 +583,6 @@ fi;
 if [ $uninstall = true ]; then
   if ! is_proxyserver_installed; then log_err_and_exit "Proxy server is not installed"; fi;
   
-  remove_from_cron;
   kill_3proxy;
   # remove_ipv6_addresses_from_iface;
   close_ufw_backconnect_ports;
@@ -650,7 +606,6 @@ fi;
 backconnect_ipv4=$(get_backconnect_ipv4);
 generate_random_users_if_needed;
 create_startup_script;
-add_to_cron;
 open_ufw_backconnect_ports;
 run_proxy_server;
 write_backconnect_proxies_to_file;
