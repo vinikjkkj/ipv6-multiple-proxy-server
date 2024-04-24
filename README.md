@@ -17,7 +17,7 @@ Just run:
 ```bash
 #sudo su
 wget https://raw.githubusercontent.com/erickythierry/ipv6-multiple-proxy-server/master/ipv6-proxy-server.sh && chmod +x ipv6-proxy-server.sh
-./ipv6-proxy-server.sh -u user -p pass -r 10 -t socks5 --start-port 30000 -c 1
+./ipv6-proxy-server.sh -u user -p pass -t socks5 --start-port 30000 -c 1
 ```
 
 Uncomment first line or run all commands with `sudo` if you`re not under root.
@@ -27,7 +27,7 @@ Uncomment first line or run all commands with `sudo` if you`re not under root.
 If script already installed, you can just run one command to reconfigure parameters, for example:
 
 ```bash
-./ipv6-proxy-server.sh -u user -p pass -r 10 -t http --start-port 30000 -c 1
+./ipv6-proxy-server.sh -u user -p pass -t http --start-port 30000 -c 1
 ```
 
 Old instance will be disabled and new starts without reinstallation very quickly.
