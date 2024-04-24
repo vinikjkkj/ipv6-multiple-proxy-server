@@ -1,3 +1,5 @@
+# this fork works differently than the original
+
 ## IPv6 Proxy Server [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Create your own IPv6 backconnect proxy server with just one script on any Linux distribution.
