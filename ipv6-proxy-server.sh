@@ -42,14 +42,14 @@ eval set -- "$options"
 
 # Set default values for optional arguments
 subnet=64
-proxies_type="http"
+proxies_type="socks5"
 start_port=30000
-rotating_interval=0
+rotating_interval=10
 use_localhost=false
 use_random_auth=false
 uninstall=false
 print_info=false
-inet6_network_interfaces_configuration_check=true
+inet6_network_interfaces_configuration_check=false
 backconnect_proxies_file="default"
 # Global network inteface name
 interface_name="$(ip -br l | awk '$1 !~ "lo|vir|wl|@NONE" { print $1 }' | awk 'NR==1')"
@@ -422,36 +422,21 @@ function create_startup_script(){
     rm $random_ipv6_list_file;
   fi; 
 
-  # Array with allowed symbols in hex (in ipv6 addresses)
-  array=( 1 2 3 4 5 6 7 8 9 0 a b c d e f )
 
-  # Generate random hex symbol
-  function rh () { echo \${array[\$RANDOM%16]}; }
+  # Obtém todos os endereços IPv6 associados às interfaces de rede
+  ipv6_addresses=$(ip -6 addr | grep inet6 | grep global | awk '{print $2}' | cut -d'/' -f1)
 
-  rnd_subnet_ip () {
-    echo -n $(get_subnet_mask);
-    symbol=$subnet
-    while (( \$symbol < 128)); do
-      if ((\$symbol % 16 == 0)); then echo -n :; fi;
-      echo -n \$(rh);
-      let "symbol += 4";
-    done;
-    echo ;
-  }
-
-  # Temporary variable to count generated ip's in cycle
-  count=1
-
-  # Generate random 'proxy_count' ipv6 of specified subnet and write it to 'ip.list' file
-  while [ "\$count" -le $proxy_count ]
-  do
-    rnd_subnet_ip >> $random_ipv6_list_file;
-    ((count+=1))
-  done;
+  # Loop através de todos os endereços IPv6 e os escreve no arquivo de saída
+  echo "$ipv6_addresses" | while IFS= read -r line; do
+    echo "$line" >> "$random_ipv6_list_file"
+  done
 
   immutable_config_part="daemon
+    nserver 8.8.8.8
+    nserver 8.8.4.4
     nserver 1.1.1.1
-    maxconn 200
+    nserver 1.0.0.1
+    maxconn 2000
     nscache 65536
     timeouts 1 5 30 60 180 1800 15 60
     setgid 65535
