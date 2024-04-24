@@ -46,9 +46,8 @@ Proxy server will stopped, all configuration files, firewalls, shedulers and so 
 
 **Command line arguments:**
 
-- `-s` or `--subnet` - IPv6 [subnet](https://docs.netgate.com/pfsense/en/latest/network/ipv6/subnets.html), fully allocated on your server. Any subnet divisible by 4 (for example, `48` or `56`), default `64`
 - `-c` or `--proxy-count` - The total number of proxies you want to have (from 1 to 10000)
-- `-t` or `--proxies-type` - Proxies type - `http` or `socks5`. Default `http`, if no value provided
+- `-t` or `--proxies-type` - Proxies type - `http` or `socks5`. Default `socks5`, if no value provided
 - `-u` or `--username` - All proxies auth login
 - `-p` or `--password` - All proxies auth password (if you specify neither username not password, proxy will run without authentication)
 - `--random` - bool parameter without value, if used, each backconnect proxy will have random username and password, that will be written in backconnect proxies file (`-f` argument)
