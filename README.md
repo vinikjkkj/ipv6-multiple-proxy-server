@@ -33,6 +33,13 @@ If script already installed, you can just run one command to reconfigure paramet
 Old instance will be disabled and new starts without reinstallation very quickly.
 
 
+#### If you want to start proxy server when reboot, add this cron routine to crontab file `/etc/crontab`
+```bash
+@reboot /usr/bin/bash /root/proxyserver/proxy-startup.sh
+```
+**change the script path to the right path according to your user**
+
+
 
 #### If you want to uninstall proxy server, just run:
 
