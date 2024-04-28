@@ -323,14 +323,14 @@ function get_ipv6_addresses() {
     ipv6_addresses=($(ip -6 addr | awk '/inet6 .* global/ { print $2 }' | cut -d'/' -f1))
 
     for ip in "${ipv6_addresses[@]}"; do
-        # echo $ip >> "$random_ipv6_list_file"
-        echo "echo $ip >> \"$random_ipv6_list_file\""
+        echo $ip >> "$random_ipv6_list_file"
+        # echo "echo $ip >> \"$random_ipv6_list_file\""
     done
 }
 
 function create_startup_script(){
-  delete_file_if_exists $startup_script_path;
   delete_file_if_exists $random_ipv6_list_file;
+  get_ipv6_addresses
 
   is_auth_used;
   local use_auth=$?;
@@ -350,8 +350,6 @@ function create_startup_script(){
   while read -r pid; do
     proxyserver_process_pids+=(\$pid)
   done < <(ps -ef | awk '/[3]proxy/{print $2}'); 
-
-  $(get_ipv6_addresses)
 
 
   immutable_config_part="daemon
@@ -393,6 +391,7 @@ function create_startup_script(){
   count=0
   if [ "$proxies_type" = "http" ]; then proxy_startup_depending_on_type="proxy -6 -n -a"; else proxy_startup_depending_on_type="socks -6 -a"; fi;
   if [ $use_random_auth = true ]; then readarray -t proxy_random_credentials < $random_users_list_file; fi;
+
   for random_ipv6_address in \$(cat $random_ipv6_list_file); do
       if [ $use_random_auth = true ]; then
         IFS=":";
