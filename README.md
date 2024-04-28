@@ -27,7 +27,7 @@ Uncomment first line or run all commands with `sudo` if you`re not under root.
 If script already installed, you can just run one command to reconfigure parameters, for example:
 
 ```bash
-./ipv6-proxy-server.sh -u user -p pass -t http --start-port 30000 -c 1
+./ipv6-proxy-server.sh -u user2 -p pass2 -t http --start-port 30000
 ```
 
 Old instance will be disabled and new starts without reinstallation very quickly.
