@@ -6,8 +6,7 @@ if [ "$EUID" -ne 0 ];
 fi;
 
 # Program help info for users
-function usage() { echo "Usage: $0 [-s | --subnet <16|32|48|64|80|96|112> proxy subnet (default 64)] 
-                          [-c | --proxy-count <number> count of proxies] 
+function usage() { echo "Usage: $0
                           [-u | --username <string> proxy auth username] 
                           [-p | --password <string> proxy password]
                           [--random <bool> generate random username/password for each IPv4 backconnect proxy instead of predefined (default false)] 
@@ -53,6 +52,7 @@ interface_name="$(ip -br l | awk '$1 !~ "lo|vir|wl|@NONE" { print $1 }' | awk 'N
 # Log file for script execution
 script_log_file="/var/tmp/ipv6-proxy-server-logs.log"
 backconnect_ipv4=""
+proxy_count=1
 
 while true; do
   case "$1" in
@@ -62,7 +62,6 @@ while true; do
     -u | --username ) user="$2"; shift 2 ;;
     -p | --password ) password="$2"; shift 2 ;;
     -t | --proxies-type ) proxies_type="$2"; shift 2 ;;
-    -r | --rotating-interval ) rotating_interval="$2"; shift 2;;
     -m | --ipv6-mask ) subnet_mask="$2"; shift 2;;
     -b | --backconnect-ip ) backconnect_ipv4="$2"; shift 2;;
     -f | --backconnect_proxies_file ) backconnect_proxies_file="$2"; shift 2;;
@@ -105,9 +104,6 @@ function is_auth_used(){
 function check_startup_parameters(){
   # Check validity of user provided arguments
   re='^[0-9]+$'
-  if ! [[ $proxy_count =~ $re ]] ; then
-    log_err_print_usage_and_exit "Error: Argument -c (proxy count) must be a positive integer number";
-  fi;
 
   if ([ -z $user ] || [ -z $password ]) && is_auth_used && [ $use_random_auth = false ]; then
     log_err_print_usage_and_exit "Error: user and password for proxy with auth is required (specify both '--username' and '--password' startup parameters)";
@@ -119,10 +115,6 @@ function check_startup_parameters(){
 
   if [ $proxies_type != "http" ] && [ $proxies_type != "socks5" ] ; then
     log_err_print_usage_and_exit "Error: invalid value of '-t' (proxy type) parameter";
-  fi;
-
-  if [ $(expr $subnet % 4) != 0 ]; then
-    log_err_print_usage_and_exit "Error: invalid value of '-s' (subnet) parameter, must be divisible by 4";
   fi;
 
   if [ $start_port -lt 5000 ] || (($start_port - $proxy_count > 65536 )); then
@@ -200,31 +192,6 @@ function remove_ipv6_addresses_from_iface(){
     for ipv6_address in $(cat $random_ipv6_list_file); do ip -6 addr del $ipv6_address dev $interface_name; done;
     rm $random_ipv6_list_file; 
   fi;
-}
-
-function get_subnet_mask(){
-  if [ -z $subnet_mask ]; then
-    # If we parse addresses from iface and want to use lower subnets, we need to clean existing proxy from interface before parsing
-    if is_proxyserver_running; then kill_3proxy; fi;
-    # if is_proxyserver_installed; then remove_ipv6_addresses_from_iface; fi;
-    
-    full_blocks_count=$(($subnet / 16));
-    # Full external ipv6 address, allocated to the interface
-    ipv6=$(ip -6 addr | awk '{print $2}' | grep -m1 -oP '^(?!fe80)([0-9a-fA-F]{1,4}:)+[0-9a-fA-F]{1,4}' | cut -d '/' -f1);
-
-    subnet_mask=$(echo $ipv6 | grep -m1 -oP '^(?!fe80)([0-9a-fA-F]{1,4}:){'$(($full_blocks_count-1))'}[0-9a-fA-F]{1,4}');
-    if [ $(expr $subnet % 16) -ne 0 ]; then
-      # Get last "uncomplete" block: if we want /68 subnet, get block from 64 to 80
-      block_part=$(echo $ipv6 | awk -v block=$(($full_blocks_count + 1)) -F ':' '{print $block}' | tr -d ' ');
-      # Because leading zeros can be skipped in the block, we need to add them if needed
-      while ((${#block_part} < 4)); do block_part="0$block_part"; done;
-      # Get part of block needed for subnet mask: if we want /72 subnet, we get 2 symbols - (72 (subnet) - 64 (full 4 blocks)) / 4 (2^4) in one hex digit
-      symbols_to_include=$(echo $block_part | head -c $(($(expr $subnet % 16) / 4)));
-      subnet_mask="$subnet_mask:$symbols_to_include";
-    fi;
-  fi;
-
-  echo $subnet_mask;
 }
 
 function delete_file_if_exists(){
@@ -382,20 +349,7 @@ function create_startup_script(){
   proxyserver_process_pids=()
   while read -r pid; do
     proxyserver_process_pids+=(\$pid)
-  done < <(ps -ef | awk '/[3]proxy/{print $2}');
-
-  # # Save old IPv6 addresses in temporary file to delete from interface after rotating
-  # old_ipv6_list_file="$random_ipv6_list_file.old"
-  # if test -f $random_ipv6_list_file; 
-  #   then cp $random_ipv6_list_file \$old_ipv6_list_file; 
-  #   rm $random_ipv6_list_file;
-  # fi; 
-
-  # Array with allowed symbols in hex (in ipv6 addresses)
-  array=( 1 2 3 4 5 6 7 8 9 0 a b c d e f )
-
-  # Generate random hex symbol
-  function rh () { echo \${array[\$RANDOM%16]}; }
+  done < <(ps -ef | awk '/[3]proxy/{print $2}'); 
 
   $(get_ipv6_addresses)
 
@@ -456,7 +410,6 @@ function create_startup_script(){
   # Script that adds all random ipv6 to default interface and runs backconnect proxy server
   ulimit -n 600000
   ulimit -u 600000
-  for ipv6_address in \$(cat ${random_ipv6_list_file}); do ip -6 addr add \$ipv6_address dev $interface_name; done;
   ${user_home_dir}/proxyserver/3proxy/bin/3proxy ${proxyserver_config_path}
 
   # Kill old 3proxy daemon, if it's working
