@@ -34,7 +34,7 @@ Old instance will be disabled and new starts without reinstallation very quickly
 
 
 
-If you want to uninstall proxy server, just run:
+#### If you want to uninstall proxy server, just run:
 
 ```bash
 ./ipv6-proxy-server.sh --uninstall
@@ -42,6 +42,12 @@ If you want to uninstall proxy server, just run:
 
 Proxy server will stopped, all configuration files, firewalls, shedulers and so on will be reset to initial state.
 
+
+#### If you want to start proxy server when reboot, add this cron routine to crontab file `/etc/crontab`
+```bash
+@reboot /usr/bin/bash /root/proxyserver/proxy-startup.sh
+```
+**change the script path to the right path according to your user**
 
 
 **Command line arguments:**
