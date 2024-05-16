@@ -559,4 +559,4 @@ run_proxy_server;
 write_backconnect_proxies_to_file;
 write_proxyserver_info;
 
-exit 0
+tail -f /dev/null
