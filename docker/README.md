@@ -4,7 +4,6 @@
 - Get the dockerfile
 - run `docker build -t ipv6-proxy .` in the same folder of the dockerfile
 - After builds end, run:
-</br>
 
 `docker run -d --network host -e PROXY_USER=myuser -e PROXY_PASS=mypass -e START_PORT=30000 ipv6-proxy
 `
