@@ -16,4 +16,8 @@ RUN apt-get update && \
 RUN wget https://raw.githubusercontent.com/erickythierry/ipv6-multiple-proxy-server/master/docker/build.sh && chmod +x build.sh
 RUN wget https://raw.githubusercontent.com/erickythierry/ipv6-multiple-proxy-server/master/docker/start.sh && chmod +x start.sh
 
-CMD ["./start.sh", "-u", "user", "-p", "pass", "--start-port", "30000"]
+ENV PROXY_USER=user
+ENV PROXY_PASS=pass
+ENV START_PORT=30000
+
+CMD ["sh", "-c", "./start.sh -u $PROXY_USER -p $PROXY_PASS --start-port $START_PORT"]
