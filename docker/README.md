@@ -1,4 +1,4 @@
-## Docker Version
+## Docker Version (very easy)
 
 ### How to run:
 - Get the dockerfile
