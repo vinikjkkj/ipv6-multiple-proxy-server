@@ -13,7 +13,7 @@ RUN apt-get update && \
     gnupg && \
     apt-get clean
 
-RUN wget https://raw.githubusercontent.com/erickythierry/ipv6-multiple-proxy-server/master/docker/build.sh && chmod +x build.sh
+RUN wget https://raw.githubusercontent.com/erickythierry/ipv6-multiple-proxy-server/master/docker/build.sh && chmod +x build.sh && ./build.sh
 RUN wget https://raw.githubusercontent.com/erickythierry/ipv6-multiple-proxy-server/master/docker/start.sh && chmod +x start.sh
 
 ENV PROXY_USER=user
