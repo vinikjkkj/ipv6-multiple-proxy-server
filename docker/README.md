@@ -6,7 +6,7 @@
 - run `docker build -t ipv6-proxy .` in the same folder of the dockerfile
 - After builds end, run:
 
-`docker run -d --name ipv6-proxy --network host ipv6-proxy`
+`docker run --privileged -d --name ipv6-proxy --network host ipv6-proxy`
 
 - ⚠️ it is necessary for the container network to be "host" so that the IP addresses of the host machine are identified and used
 
