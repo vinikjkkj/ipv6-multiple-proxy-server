@@ -5,8 +5,8 @@ COPY . /app
 RUN apt update
 RUN apt install -y make g++ wget curl cron iproute2 iptables iputils-ping net-tools tar apt-transport-https gnupg
 
-RUN wget https://raw.githubusercontent.com/vinikjkkj/ipv6-multiple-proxy-server/master/docker/build.sh && chmod +x build.sh && ./build.sh
-RUN wget https://raw.githubusercontent.com/vinikjkkj/ipv6-multiple-proxy-server/master/docker/start.sh && chmod +x start.sh
+RUN wget https://raw.githubusercontent.com/vinikjkkj/ipv6-multiple-proxy-server/master/build.sh && chmod +x build.sh && ./build.sh
+RUN wget https://raw.githubusercontent.com/vinikjkkj/ipv6-multiple-proxy-server/master/start.sh && chmod +x start.sh
 
 ENV PROXY_USER=user
 ENV PROXY_PASS=pass
