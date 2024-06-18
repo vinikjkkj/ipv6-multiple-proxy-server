@@ -41,7 +41,7 @@ subnet=64
 proxies_type="socks5"
 start_port=30000
 rotating_interval=0
-use_localhost=false
+use_localhost=true
 use_random_auth=false
 uninstall=false
 print_info=false
@@ -209,7 +209,7 @@ function install_package(){
 
 # DONT use before curl package is installed
 function get_backconnect_ipv4(){
-  if [ $use_localhost == true ]; then echo "127.0.0.1"; return; fi;
+  if [ $use_localhost == true ]; then echo "0.0.0.0"; return; fi;
   if [ ! -z "$backconnect_ipv4" -a "$backconnect_ipv4" != " " ]; then echo $backconnect_ipv4; return; fi;
 
   local maybe_ipv4=$(ip addr show $interface_name | awk '$1 == "inet" {gsub(/\/.*$/, "", $2); print $2}')
@@ -218,7 +218,7 @@ function get_backconnect_ipv4(){
   if ! is_package_installed "curl"; then install_package "curl"; fi;
 
   (maybe_ipv4=$(curl https://ipinfo.io/ip)) &> /dev/null
-  if is_valid_ip $maybe_ipv4; then echo $maybe_ipv4; return; fi;
+  if is_valid_ip $maybe_ipv4; then echo "0.0.0.0"; return; fi;
 
   log_err_and_exit "Error: curl package not installed and cannot parse valid IP from interface info";
 }

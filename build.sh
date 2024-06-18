@@ -8,6 +8,45 @@ backconnect_proxies_file="default"
 script_log_file="/var/tmp/ipv6-proxy-server-logs.log"
 proxy_count=1
 
+# Nome da interface
+interface="eth0"
+
+# Adiciona os endereços IPv6 à interface
+ip -6 addr add 2a09:8280:1::39:8d14:0 dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:1 dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:2 dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:3 dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:4 dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:5 dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:6 dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:7 dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:8 dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:9 dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:a dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:b dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:c dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:d dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:e dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:f dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:10 dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:11 dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:12 dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:13 dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:14 dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:15 dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:16 dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:17 dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:18 dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:19 dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:1a dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:1b dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:1c dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:1d dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:1e dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:1f dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:20 dev "$interface"
+ip -6 addr add 2a09:8280:1::39:8d14:21 dev "$interface"
+
 function log_err(){
   echo $1 1>&2;
   echo -e "$1\n" &>> $script_log_file;
